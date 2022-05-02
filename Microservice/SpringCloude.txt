@@ -1,0 +1,141 @@
+1) Create EurekaServerApp as SpringBooot project with following dependencies
+    Web
+    Eureka Server
+
+//Eureka Service registry
+
+application.properties
+server.port=8761
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+
+
+The main class
+@SpringBootApplication
+@EnableEurekaServer //makes it Eurekaserver
+public class EurekaServerApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(EurekaServerApplication.class, args);
+	}
+
+}
+-----------------------------------------------------
+
+Create EmployeeService SpringBoot application with following dependencies
+  Web
+  Eureka client
+  devtools
+
+EmployeeService
+application.properties
+
+spring.application.name=eureka-employee-service
+server.port=8082
+eureka.instance.hostname=localhost
+eureka.client.service-url.defaultZone=http://${eureka.instance.hostname}:8761/eureka/
+
+main class
+@SpringBootApplication
+@EnableDiscoveryClient
+public class EmployeeserviceApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(EmployeeserviceApplication.class, args);
+	}
+
+}
+Model
+
+class Employee{
+   private int empno;
+   private String name;
+   private int salary;
+   Constructor
+   Setter and getter methods
+
+}
+
+
+@RestController
+public class EmployeeController {
+    @GetMapping("/employee")
+	public Employee getEmployee() {
+		Employee emp= new Employee(102,"Meena",3000);
+		return emp;
+	}
+}
+--------------------------------------------------
+
+3)
+
+Create SalaryService as aSpringBoot application with following dependencies
+  Web
+  Eureka client
+  devtools
+
+
+
+Salary Service
+spring.application.name=eureka-salary-service
+server.port=8083
+eureka.instance.hostname=localhost
+eureka.client.service-url.defaultZone=http://${eureka.instance.hostname}:8761/eureka/
+
+main class
+@SpringBootApplication
+@EnableDiscoveryClient
+public class SalaryserviceApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(SalaryserviceApplication.class, args);
+	}
+	@Bean
+	@LoadBalanced
+        public RestTemplate restTemplate() {
+    	return new RestTemplate();
+       }
+}
+
+Model
+
+class Employee{
+   private int empno;
+   private String name;
+   private int salary;
+   Constructor
+   Setter and getter methods
+
+}
+
+
+Controller
+
+@RestController
+public class SalaryController {
+    @Autowired
+	RestTemplate restTemplate;
+	@GetMapping("/empsal")
+	public Employee updateSalary() {
+	  Employee emp=restTemplate.getForObject("http://eureka-employee-service/employee",Employee.class);
+		   int salary= emp.getSalary();
+		   salary+=1000;
+		   emp.setSalary(salary);
+		   return emp;
+	}
+	
+}
+
+
+------------------
+1) start EureKaServer Application
+   run main class as Java application
+
+2) start EmployeeService Application
+   run main class as Java application
+   check in browser
+   http://localhost:8082/employee
+3)start SalaryService Application
+   run main class as Java application
+   check in browser
+   http://localhost:8083/empsal
+--------------------------
+

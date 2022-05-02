@@ -1,0 +1,186 @@
+1) Create EurekaServerApp as SpringBooot project with following dependencies
+    Web
+    Eureka Server
+
+//Eureka Service registry
+
+application.properties
+server.port=8761
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+
+
+The main class
+@SpringBootApplication
+@EnableEurekaServer //makes it Eurekaserver
+public class EurekaServerApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(EurekaServerApplication.class, args);
+	}
+
+}
+-----------------------------------------------------------
+2) Create a GateWay
+
+Create Spring boot CtsGateway application with folowing dependencies
+
+Eureka Discovery Client.
+Spring Cloud Gateway.
+Spring Boot Actuator.
+
+main class
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class CtsGatewayApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(CtsGatewayApplication.class, args);
+	}
+	
+}
+
+
+
+
+application.properties
+
+server.port=9191
+spring.application.name=eureka-payroll-gateway
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+spring.cloud.gateway.discovery.locator.enabled=true
+spring.cloud.gateway.routes[0].id=employee-service
+spring.cloud.gateway.routes[0].uri=lb://eureka-employee-service
+spring.cloud.gateway.routes[0].predicates[0]=Path=/employee/**
+spring.cloud.gateway.routes[1].id=payroll-service
+spring.cloud.gateway.routes[1].uri=lb://eureka-salary-service
+spring.cloud.gateway.routes[1].predicates[0]=Path=/empsal/**
+
+
+-----------------------------------------------------
+
+3) Create EmployeeService SpringBoot application with following dependencies
+  Web
+  Eureka client
+  devtools
+
+EmployeeService
+application.properties
+
+spring.application.name=eureka-employee-service
+server.port=8082
+eureka.instance.hostname=localhost
+eureka.client.service-url.defaultZone=http://${eureka.instance.hostname}:8761/eureka/
+
+main class
+@SpringBootApplication
+@EnableDiscoveryClient
+public class EmployeeserviceApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(EmployeeserviceApplication.class, args);
+	}
+
+}
+Model
+
+class Employee{
+   private int empno;
+   private String name;
+   private int salary;
+   Constructor
+   Setter and getter methods
+
+}
+
+
+@RestController
+public class EmployeeController {
+    @GetMapping("/employee")
+	public Employee getEmployee() {
+		Employee emp= new Employee(102,"Meena",3000);
+		return emp;
+	}
+}
+--------------------------------------------------
+
+4)
+
+Create SalaryService as aSpringBoot application with following dependencies
+  Web
+  Eureka client
+  devtools
+
+
+
+Salary Service
+spring.application.name=eureka-salary-service
+server.port=8083
+eureka.instance.hostname=localhost
+eureka.client.service-url.defaultZone=http://${eureka.instance.hostname}:8761/eureka/
+
+main class
+@SpringBootApplication
+@EnableDiscoveryClient
+public class SalaryserviceApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(SalaryserviceApplication.class, args);
+	}
+	@Bean
+	@LoadBalanced
+        public RestTemplate restTemplate() {
+    	return new RestTemplate();
+       }
+}
+
+Model
+
+class Employee{
+   private int empno;
+   private String name;
+   private int salary;
+   Constructor
+   Setter and getter methods
+
+}
+
+
+Controller
+
+@RestController
+public class SalaryController {
+    @Autowired
+	RestTemplate restTemplate;
+	@GetMapping("/empsal")
+	public Employee updateSalary() {
+	  Employee emp=restTemplate.getForObject("http://eureka-employee-service/employee",Employee.class);
+		   int salary= emp.getSalary();
+		   salary+=1000;
+		   emp.setSalary(salary);
+		   return emp;
+	}
+	
+}
+
+
+
+
+With gateway
+
+1) start EureKaServer Application
+   run main class as Java application
+
+
+2) start Gateway application 
+    run main class as Java application
+
+3) start EmployeeService Application
+   run main class as Java application
+4)start SalaryService Application
+   run main class as Java application
+
+5)http://localhost:9191/employee
+6)http://localhost:9191/empsal
+
+
+  
